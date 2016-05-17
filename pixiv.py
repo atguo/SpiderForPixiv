@@ -22,13 +22,18 @@ class PIXIV:
     def login_main_page(self):
         loginpage = 'https://www.pixiv.net/login.php'
 
+        p_id = raw_input('pixiv_id:')
+        password = raw_input('pawwword:')
+
         self.logindata = {
             'mode': 'login',
             'return_to': '/',
-            'pixiv_id': '1337939247@qq.com',
-            'pass': '13777gattag',
+            'pixiv_id': '',#p站用户名
+            'pass': '',#p站密码
             'skip': 1
         }
+        self.logindata['pixiv_id']=p_id
+        self.logindata['pass']=password
         self.p_login_data=urllib.urlencode(self.logindata)
         self.p_login_header = {  # 头信息
             'accept-language': 'zh-CN,zh;q=0.8',
@@ -68,12 +73,12 @@ class PIXIV:
 
     def get_pic(self,index):
         page_ls = self.get_pic_list(index)
-        num=1
+        num = 1
         for p in page_ls:
             id=re.findall('h.*?id=(\d+)',p)
             page = self.opener.open(p).read()
             pic = re.findall('<div class="wrapper">.*?<img.*?data-src="(.*?)".*?>.*?</div>',page)
-            path = 'D:\\图\未分类\\'
+            path = 'D:\\downloader_p\\'
             filename = path + id[0] + '_' + str(num)+'.jpg'
             print filename
             if pic:
@@ -108,6 +113,6 @@ class PIXIV:
 
 pixiv = PIXIV()
 pixiv.login_main_page()
-pixiv.get_pic(3)
+pixiv.get_pic(2)
 
 #<li.*?><a href="(.*?)".*?></a>.*?<a.*?>.*?</a></li>
