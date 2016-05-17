@@ -8,8 +8,10 @@ import re
 
 
 
-class PIXIV:
-    def __init__(self):
+class PIXIV(threading.Thread):
+    def __init__(self, head_index, tail_index):
+        self.head_index = head_index
+        self.tail_index = tail_index
         self.filename = 'cookie.txt'
         self.mainpage = 'http://www.pixiv.net'
         self.piclist = 'http://www.pixiv.net/bookmark_new_illust.php'
