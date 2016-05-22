@@ -14,7 +14,7 @@ class PIXIV(threading.Thread):
         self.filename = 'cookie.txt'
         self.mainpage = 'http://www.pixiv.net'
         self.piclist = 'http://www.pixiv.net/bookmark_new_illust.php'
-
+        #sss
     def Cookie_Login(self):  # 读取之前登陆生成的cookie
         cookie_login = cookielib.MozillaCookieJar()
         cookie_login.load('cookie.txt', ignore_discard=True, ignore_expires=True)
