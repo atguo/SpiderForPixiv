@@ -5,13 +5,12 @@ import urllib
 import threading
 import cookielib
 import re
+import os
 
 
 
 class PIXIV(threading.Thread):
-    def __init__(self, head_index, tail_index):
-        self.head_index = head_index
-        self.tail_index = tail_index
+    def __init__(self):
         self.filename = 'cookie.txt'
         self.mainpage = 'http://www.pixiv.net'
         self.piclist = 'http://www.pixiv.net/bookmark_new_illust.php'
@@ -21,6 +20,16 @@ class PIXIV(threading.Thread):
         cookie_login.load('cookie.txt', ignore_discard=True, ignore_expires=True)
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie_login))
         return opener
+
+    def makedir(self,path):
+        path=path.strip()
+        isExists=os.path.exists(path)
+        if not isExists:
+            os.makedirs(path)
+            return True
+        else:
+            return False
+
 
     def login_main_page(self):
         loginpage = 'https://www.pixiv.net/login.php'
@@ -77,16 +86,17 @@ class PIXIV(threading.Thread):
     def get_pic(self,index):
         page_ls = self.get_pic_list(index)
         num = 1
+        path = 'D:\\downloader_p'
+        self.makedir(path)
         for p in page_ls:
-            id=re.findall('h.*?id=(\d+)',p)
+            id = re.findall('h.*?id=(\d+)', p)
             page = self.opener.open(p).read()
-            pic = re.findall('<div class="wrapper">.*?<img.*?data-src="(.*?)".*?>.*?</div>',page)
-            path = 'D:\\downloader_p\\'
-            filename = path + id[0] + '_' + str(num)+'.jpg'
+            pic = re.findall('<div class="wrapper">.*?<img.*?data-src="(.*?)".*?>.*?</div>', page)
+            filename = path + '\\'+'id[0] ' + '_' + str(num)+'.jpg'
             print filename
             if pic:
-                self.saveImage(filename, pic[0],p)
-            num+=1
+                self.saveImage(filename, pic[0], p)
+            num += 1
 
     def saveImage(self,filename,imageurl,page):
 
