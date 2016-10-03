@@ -49,16 +49,15 @@ class PIXIV(threading.Thread):
         login_page_html = self.session.get(loginpage)
 
         self.logindata = {
-            "pixiv_id": "****",
-            "password": "****",
             "captcha": "",
             "g_recaptcha_response": "",
             "source": "source",
             'skip': '1',
             'mode': 'login',
         }
-        p_id = input('pixiv_id:')
-        password = input('pass_wword:')
+
+        self.logindata["pixiv_id"] = input('pixiv_id:')
+        self.logindata["password"] = input('pass_wword:')
 
         #得到post_key,并设置到form data
         soup = BeautifulSoup(login_page_html.text, "lxml")
