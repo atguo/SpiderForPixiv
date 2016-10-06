@@ -1,9 +1,0 @@
-# Netscape HTTP Cookie File
-# http://curl.haxx.se/rfc/cookie_spec.html
-# This is a generated file!  Do not edit.
-
-.pixiv.net	TRUE	/	FALSE	1466523420	PHPSESSID	12843843_0fec0e414746ba6c0c7bcbb086554842
-.pixiv.net	TRUE	/	FALSE	1466523420	device_token	f1df830415c8d37bad3f7c9a0eb86853
-.pixiv.net	TRUE	/	FALSE	1495467420	module_orders_mypage	%5B%7B%22name%22%3A%22everyone_new_illusts%22%2C%22visible%22%3Atrue%7D%2C%7B%22name%22%3A%22spotlight%22%2C%22visible%22%3Atrue%7D%2C%7B%22name%22%3A%22featured_tags%22%2C%22visible%22%3Atrue%7D%2C%7B%22name%22%3A%22contests%22%2C%22visible%22%3Atrue%7D%2C%7B%22name%22%3A%22following_new_illusts%22%2C%22visible%22%3Atrue%7D%2C%7B%22name%22%3A%22mypixiv_new_illusts%22%2C%22visible%22%3Atrue%7D%2C%7B%22name%22%3A%22booth_follow_items%22%2C%22visible%22%3Atrue%7D%5D
-.pixiv.net	TRUE	/	FALSE	1621697820	p_ab_id	2
-www.pixiv.net	FALSE	/	FALSE	1464017820	a_type	0
