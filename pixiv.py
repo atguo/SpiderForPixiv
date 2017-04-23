@@ -1,4 +1,4 @@
-#-*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 
 from bs4 import BeautifulSoup
 import json
@@ -7,6 +7,7 @@ import re
 import time
 import os
 import requests
+import sys
 
 
 def makedir(path):
@@ -14,16 +15,23 @@ def makedir(path):
     isExists = os.path.exists(path)
     if not isExists:
         os.makedirs(path)
+        print(path + " has created")
         return True
     else:
+        print(path + " has exists")
         return False
 
-class PIXIV(threading.Thread):
-    def __init__(self):
+
+class Pixiv(threading.Thread):
+    def __init__(self, pixiv_id, password):
+
         self.mainpage = 'http://www.pixiv.net'
         self.bookmark = 'http://www.pixiv.net/bookmark_new_illust.php'
         self.session = requests.Session()
         self.fail_link = []
+        self.fail_link_id = []
+        self.pixiv_id = pixiv_id
+        self.password = password
         self.path = 'D:\\downloader_pixiv'
         self.headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -31,8 +39,29 @@ class PIXIV(threading.Thread):
             "Connection": "keep-alive",
             "Referer": "https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index",
             "Accept-Language": "zh-CN,zh;q=0.8",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36",
+            "User-Agent": """Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3076.0 Safari/537.36"""
         }
+
+    def login_main_page(self):
+        loginpage = 'https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index'
+
+        login_page_html = self.session.get(loginpage)
+        self.logindata = dict(captcha="", g_recaptcha_response="", source="pc", ref="wwwtop_accounts_index")
+        self.logindata["pixiv_id"] = self.pixiv_id
+        self.logindata["password"] = self.password
+
+        # 得到post_key,并设置到form data
+        soup = BeautifulSoup(login_page_html.text, "lxml")
+        init_config_tag = soup.find_all("input", id="init-config")[0]
+        postKey = json.loads(init_config_tag.get("value"))["pixivAccount.postKey"]
+        self.logindata["post_key"] = postKey
+
+        # 登陆
+        res1 = self.session.post(loginpage, self.logindata, headers=self.headers)
+
+        file = open("pixiv-1.html", 'wb')
+        file.write(res1.text.encode())
+        file.close()
 
     def get_pic_type(self, real_url):  # 区分图片格式
         p_type = re.search(re.compile('png', re.S), real_url)
@@ -42,72 +71,51 @@ class PIXIV(threading.Thread):
         else:
             self.pic_type = 'png'
 
-    def login_main_page(self):
-        loginpage = 'http://accounts.pixiv.net/login'
-
-
-        login_page_html = self.session.get(loginpage)
-
-        self.logindata = {
-            "captcha": "",
-            "g_recaptcha_response": "",
-            "source": "source",
-            'skip': '1',
-            'mode': 'login',
-        }
-
-        self.logindata["pixiv_id"] = input('pixiv_id:')
-        self.logindata["password"] = input('pass_wword:')
-
-        #得到post_key,并设置到form data
-        soup = BeautifulSoup(login_page_html.text, "lxml")
-        init_config_tag = soup.find_all("input", id="init-config")[0]
-        postKey = json.loads(init_config_tag.get("value"))["pixivAccount.postKey"]
-        self.logindata["post_key"] =postKey
-
-        #登陆
-        res1 = self.session.post(loginpage,self.logindata,headers=self.headers)
-
     def get_pic_list(self, index):
-        url = self.bookmark + '?p='+str(index)
-        pic_ls_page =self.session.get(url)
+        url = self.bookmark + '?p=' + str(index)
+        pic_ls_page = self.session.get(url)
 
-        soup = BeautifulSoup(pic_ls_page.text,"lxml")
-        pic_ls = soup.find_all("li",class_="image-item")
+        soup = BeautifulSoup(pic_ls_page.text, "lxml")
+        pic_element_ls = soup.find_all("li", class_="image-item")
         pic_url_ls = []
-        for url in pic_ls:
-            id = re.findall('.*?id=(\d+)', url.contents[0]["href"])[0]
-            append_url = self.mainpage + url.contents[0]["href"]
+        pic_id_ls = []
+        for element in pic_element_ls:
+            pic_id = re.findall('.*?id=(\d+)', element.contents[0]["href"])[0]
+            append_url = self.mainpage + element.contents[0]["href"]
             pic_url_ls.append(append_url)
-            pic_url_ls.append(id)
-        return pic_url_ls
+            pic_id_ls.append(pic_id)
+        result = [pic_url_ls, pic_id_ls]
+        return result
 
-    def get_bookmark_pic(self,index):
-        page_ls = self.get_pic_list(index)
+    def get_bookmark_pic(self, index):
+        targets = self.get_pic_list(index)
 
-
+        pic_num = len(targets[0])
         makedir(self.path)
-        for i in range(0,len(page_ls)-1,2):
-            url = page_ls[i]
-            id = page_ls[i+1]
-            filename = self.path + '\\'+id
-            print(url,"   ",i+1)
-            self.download_pic(url,id,filename)
+        for i in range(0, pic_num - 1):
+            url = targets[0][i]
+            pic_id = targets[1][i]
+            # filename = self.path + '\\'+ id
+            print(url, "  ", i + 1)
+            self.download_pic(url, pic_id)
 
-    def download_pic(self, url, id, filename):
+    def download_pic(self, url, pic_id):
         headers = self.headers
         headers["Referer"] = url
         try:
             page = self.session.get(url, headers=headers)
         except:
             self.fail_link.append(url)
-            self.fail_link.append(id)
+            self.fail_link_id.append(pic_id)
             print("打开图片页面失败！！！！！！！！")
             return False
         soup = BeautifulSoup(page.text, "lxml")
-        realURL = soup.find("img", attrs={"class", "original-image"})
+        artest = soup.find_all("h1", class_="user")[0].get_text()
+        file_path = self.path + '\\' + artest
+        makedir(file_path)
 
-        if(realURL):
+        realURL = soup.find("img", attrs={"class", "original-image"})
+        if realURL:
             headers["Referer"] = realURL["data-src"]
             try:
                 pictrue = self.session.get(realURL["data-src"], headers=headers)
@@ -115,12 +123,13 @@ class PIXIV(threading.Thread):
                 print("打开下载连接失败")
                 return False
             self.get_pic_type(realURL["data-src"])
-            filename = filename + "." + self.pic_type
+            title = realURL["alt"]
+            filename = file_path + "\\" + title + pic_id + "." + self.pic_type
             try:
                 f = open(filename, "wb")
                 f.write(pictrue.content)
                 f.close()
-                print("下载成功：",realURL["data-src"])
+                print("下载成功：", realURL["data-src"])
                 return True
             except:
                 print("下载失败")
@@ -130,28 +139,28 @@ class PIXIV(threading.Thread):
             return True
 
     def download_fail_pic(self):
-        failLink = self.fail_link[:]
-        for i in range(0, len(failLink) - 1, 2):
-            url = failLink[i]
-            id = failLink[i + 1]
-            filename = self.path + '\\' + id
-            print(url, "   ", i + 1)
+        for i in range(0, len(self.fail_link) - 1):
+            url = self.fail_link[i]
+            pic_id = self.fail_link_id[i]
             try:
-                if(self.download_pic(url, id, filename)):
-                    self.fail_link.remove(url)
-                    self.fail_link.remove(id)
-                else:
-                    print("下载失败")
+                self.download_pic(url, pic_id)
+                self.fail_link.remove(self.fail_link[i])
+                self.fail_link_id.remove(self.fail_link_id[i])
             except:
                 print("下载失败")
 
-pixiv = PIXIV()
+page_begin = int(sys.argv[1])
+page_end = int(sys.argv[2])
+# print(page_begin)
+# print(type(int(page_begin)))
+pixiv = Pixiv("your account", "your password")
 pixiv.login_main_page()
-for i in range(5):
+# pixiv.get_bookmark_pic(6)
+for i in range(page_begin, page_end):
     pixiv.get_bookmark_pic(i)
     time.sleep(30)
-while(pixiv.fail_link):
+while pixiv.fail_link:
     pixiv.download_fail_pic()
     time.sleep(30)
 
-#<li.*?><a href="(.*?)".*?></a>.*?<a.*?>.*?</a></li>
+
